@@ -15,7 +15,7 @@ setuptools.setup(
     long_description="FeatureExplorePlus helps with feature understanding, feature debugging, leakage detection, "
                      "finding noisy features and model monitoring",
     long_description_content_type="text/markdown",
-    url="",
+    url="https://github.com/XiaolinZHONG/FeatureExplorePlus.git",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

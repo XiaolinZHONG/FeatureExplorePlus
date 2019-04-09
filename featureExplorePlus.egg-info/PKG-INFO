@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: featureExplorePlus
+Version: 0.0.1
+Summary: Feature exploration for supervised learning. This version based on Abhay's featexp, add user define bins which base on decision tree,and add the origin distribution plot function based on seaborn kdeplotand add some useful pandas tools
+Home-page: https://github.com/XiaolinZHONG/FeatureExplorePlus.git
+Author: Zhong Xiaolin
+Author-email: xlzhong123@163.com
+License: UNKNOWN
+Description: FeatureExplorePlus helps with feature understanding, feature debugging, leakage detection, finding noisy features and model monitoring
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
