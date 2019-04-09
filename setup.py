@@ -22,6 +22,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['pandas>=0.23.4', 'numpy>=1.15.4', 'matplotlib>=3.0.2', 'sklearn>=0.19.0', 'seaborn>=0.8']
+    install_requires=['pandas>=0.23.4', 'numpy>=1.15.4', 'matplotlib>=3.0.2', 'scikit-learn>=0.19.0', 'seaborn>=0.8']
 
 )
