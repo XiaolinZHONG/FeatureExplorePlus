@@ -5,12 +5,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="featureExplorePlus",
-    version="0.0.3.3",
+    version="0.0.4.0",
     author="Zhong Xiaolin",
     author_email="xlzhong123@163.com",
     description="Feature exploration for supervised learning. This version based on Abhay's featexp, "
                 "add user define bins which base on decision tree,"
-                "and add the origin distribution plot function based on seaborn kdeplot"
+                "and add the origin distribution plot function based on seaborn histplot"
+                "add psi calculate function"
                 "and add some useful pandas tools",
     long_description="FeatureExplorePlus helps with feature understanding, feature debugging, leakage detection, "
                      "finding noisy features and model monitoring",
