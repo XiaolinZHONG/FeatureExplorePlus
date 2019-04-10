@@ -105,11 +105,11 @@ def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=N
 
     props = dict(boxstyle='round', facecolor='snow', alpha=0.5)
     ax1.text(0.4, 0.5, comment, fontsize=10, verticalalignment='center', bbox=props, transform=ax1.transAxes)
-    plt.title('Average|Samples in bins of ' + target_col + ' corr ' + feature)
+    plt.title('Average and Samples in bins of ' + target_col + ' on ' + feature)
 
     ax2 = ax1.twinx()
     ax2.bar(np.arange(len(input_data)), input_data['Samples_in_bin'], alpha=0.4)
-    ax2.set_ylabel('Bin-wise sample size')
+    ax2.set_ylabel('Bin-Wise sample size')
     ax2.yaxis.tick_right()
     ax2.yaxis.set_label_position('right')
     plt.tight_layout()
@@ -117,8 +117,8 @@ def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=N
     ax3 = fig.add_subplot(122)  # This can not be delete
     flag_value = np.array(origin_data[target_col].unique()).astype(int)
     for i in flag_value:
-        sns.kdeplot(origin_data.loc[origin_data[target_col] == i, feature].fillna(-900), shade=True, label=i)
-    plt.title("Distribution of %s" % feature)
+        sns.distplot(origin_data.loc[origin_data[target_col] == i, feature].fillna(-900), hist=True, bins=50, label=i)
+    plt.title("Origin distribution of %s" % feature)
     plt.subplots_adjust(wspace=0.25)
     gc.collect()
     plt.show()
@@ -239,7 +239,7 @@ def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=
         else:
             draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
         print(
-            '---' * 30)
+            '---' * 20)
         print('\n')
         # if has_test:
         #     return grouped, grouped_test
@@ -264,7 +264,7 @@ def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=
         else:
             draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
         print(
-            '---' * 30)
+            '---' * 20)
         print('\n')
         # if has_test:
         #     return grouped, grouped_test
