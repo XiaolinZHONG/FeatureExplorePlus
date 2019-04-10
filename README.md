@@ -38,4 +38,4 @@ fp=fep.FeatureExplore() # 这里可以参入参数是否使用决策树分BIN，
 ```
 #### 3. 详细的例子
 
-详细的使用案例参见项目中的 examples
+详细的使用案例参见项目中的 [examples](https://github.com/XiaolinZHONG/FeatureExplorePlus/blob/master/examples/Features_Explore_Analysis_Examples.ipynb)
