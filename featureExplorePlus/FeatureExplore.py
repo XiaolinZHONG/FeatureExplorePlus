@@ -176,8 +176,11 @@ def get_trend_correlation(grouped, grouped_test, feature, target_col):
     return trend_correlation
 
 
-def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0):
+def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0, min_samples_leaf=0.05,
+                    min_samples_split=0.1):
     """
+    :param min_samples_leaf: tree split min samples in leaf
+    :param min_samples_split: tree split min samples in split
     :param input_data: pandas data frame  containing  feature and target columns
     :param feature: the feature column name
     :param target_col: the target column name
@@ -187,11 +190,11 @@ def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0):
     """
     clf = DecisionTreeClassifier(
         criterion="entropy",
-        min_samples_leaf=0.05,
-        min_samples_split=0.1,
+        min_samples_leaf=min_samples_leaf,
+        min_samples_split=min_samples_split,
         max_depth=bins,
         max_leaf_nodes=bins)
-    x = input_data[feature].values.reshape(input_data[feature].shape[0], 1)
+    x = input_data[feature].fillna(-900).values.reshape(input_data[feature].shape[0], 1)
     y = input_data[target_col]
     clf.fit(x, y)
     count_leaf = 0
@@ -358,3 +361,20 @@ class FeatureExplore(object):
                 variate_plotter(feature=cols, data=data, target_col=target_col, bins=bins,
                                 data_test=data_test,
                                 tree_split=self.tree_split)
+
+    def get_tree_bins(self, data, target_col, features_list=0, bins=10, min_samples_leaf=0.05, min_samples_split=0.1):
+
+        if type(features_list) == int:
+            features_list = list(data.columns)
+            features_list.remove(target_col)
+        if self.tree_split:
+            for cols in features_list:
+                if cols != target_col and data[cols].dtype == 'O':
+                    print(cols + ' is categorical. Categorical features not supported.')
+                elif cols != target_col and data[cols].dtype != 'O':
+                    tree_bin = tree_split_bins(input_data=data, feature=cols, target_col=target_col, bins=bins,
+                                               get_bins_alone=1, min_samples_leaf=min_samples_leaf,
+                                               min_samples_split=min_samples_split)
+                    print('This is the bin of feature %s' % cols)
+                    print(tree_bin)
+                    print('---' * 20)
