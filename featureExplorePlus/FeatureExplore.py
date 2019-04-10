@@ -277,10 +277,17 @@ def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=
 
 def PSI_cal(grouped, grouped_test, target_col):
     sum = 0
+    count = 0
     for i in grouped.index:
         var1 = grouped_test.loc[i, target_col + '_mean'] - grouped.loc[i, target_col + '_mean']
         var2 = grouped_test.loc[i, target_col + '_mean'] / grouped.loc[i, target_col + '_mean']
-        sum += var1 * math.log(var2)
+        if math.isnan(var1) or math.isnan(var2):
+            count += 1
+        else:
+            count += 1
+            sum += var1 * math.log(var2)
+    if count < grouped.shape[0]:
+        print('The input data have nan value! Please use pd.fillna() to process')
     return sum
 
 
@@ -305,7 +312,7 @@ class FeatureExplore(object):
                 cut = tree_split_bins(input_data=data, feature=feature, target_col=target_col, bins=bins)
                 cuts, grouped = get_grouped_data(input_data=data, feature=feature, target_col=target_col,
                                                  bins=bins,
-                                                 cuts=cut)
+                                                 cuts=cut, is_train=1)
                 trend_changes = get_trend_changes(grouped_data=grouped, feature=feature,
                                                   target_col=target_col)
                 if has_test:
