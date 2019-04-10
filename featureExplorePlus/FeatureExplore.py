@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from sklearn.tree import DecisionTreeClassifier, _tree
 import seaborn as sns
 import gc
+import math
 
 
 def get_grouped_data(input_data, feature, target_col, bins, cuts=0, is_train=0):
@@ -212,23 +213,11 @@ def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0):
     return new_threshold_2.tolist()
 
 
-def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=0):
-    """
-    :param self:
-    :return:
-    :param feature: feature column name
-    :param data: dataframe containing features and target columns
-    :param target_col: target column name
-    :param bins: number of bins to be created from continuous feature
-    :param data_test: test data which has to be compared with input data for correlation
-    :param tree_split: whether it needs to be divided based on decision tree (CART Tree)
-    :return: grouped data if only train passed, else (grouped train data, grouped test data)
-    """
-
+def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=False):
     print(' {:^100} '.format('Plots for ' + feature))
     if data[feature].dtype == 'O':
         print('Categorical feature not supported')
-    elif tree_split == 1:
+    elif tree_split:
         cut = tree_split_bins(input_data=data, feature=feature, target_col=target_col, bins=bins)
 
         cuts, grouped = get_grouped_data(input_data=data, feature=feature, target_col=target_col,
@@ -250,12 +239,12 @@ def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=
         else:
             draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
         print(
-            '---' * 10)
+            '---' * 30)
         print('\n')
-        if has_test:
-            return grouped, grouped_test
-        else:
-            return grouped
+        # if has_test:
+        #     return grouped, grouped_test
+        # else:
+        #     return grouped
     else:
         cuts, grouped = get_grouped_data(input_data=data, feature=feature, target_col=target_col,
                                          bins=bins)
@@ -275,28 +264,29 @@ def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=
         else:
             draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
         print(
-            '---' * 10)
+            '---' * 30)
         print('\n')
-        if has_test:
-            return grouped, grouped_test
-        else:
-            return grouped
+        # if has_test:
+        #     return grouped, grouped_test
+        # else:
+        #     return grouped
 
 
-class FeatureExplore():
+def PSI_cal(grouped, grouped_test, target_col):
+    sum = 0
+    for i in grouped.index:
+        var1 = grouped_test.loc[i, target_col + '_mean'] - grouped.loc[i, target_col + '_mean']
+        var2 = grouped_test.loc[i, target_col + '_mean'] / grouped.loc[i, target_col + '_mean']
+        sum += var1 * math.log(var2)
+    return sum
 
-    def __init__(self, tree_split=0):
+
+class FeatureExplore(object):
+
+    def __init__(self, tree_split):
         self.tree_split = tree_split
 
     def feature_trend_stats(self, data, target_col, features_list=0, bins=10, data_test=0):
-        """
-        :param data: dataframe containing features and target columns
-        :param target_col: target column name
-        :param features_list: by default creates plots for all features. If list passed, creates plots of only those features.
-        :param bins: number of bins to be created from continuous feature
-        :param data_test: test data which has to be compared with input data for correlation
-        :return: dataframe with trend changes and trend correlation (if test data passed)
-        """
 
         if type(features_list) == int:
             features_list = list(data.columns)
@@ -308,7 +298,7 @@ class FeatureExplore():
         for feature in features_list:
             if data[feature].dtype == 'O' or feature == target_col:
                 ignored.append(feature)
-            elif self.tree_split == 1:
+            elif self.tree_split:
                 cut = tree_split_bins(input_data=data, feature=feature, target_col=target_col, bins=bins)
                 cuts, grouped = get_grouped_data(input_data=data, feature=feature, target_col=target_col,
                                                  bins=bins,
@@ -322,7 +312,8 @@ class FeatureExplore():
                     trend_corr = get_trend_correlation(grouped, grouped_test, feature, target_col)
                     trend_changes_test = get_trend_changes(grouped_data=grouped_test, feature=feature,
                                                            target_col=target_col)
-                    stats = [feature, trend_changes, trend_changes_test, trend_corr]
+                    PSI_value = PSI_cal(grouped, grouped_test, target_col)
+                    stats = [feature, trend_changes, trend_changes_test, trend_corr, PSI_value]
                 else:
                     stats = [feature, trend_changes]
                 stats_all.append(stats)
@@ -339,14 +330,15 @@ class FeatureExplore():
                     trend_corr = get_trend_correlation(grouped, grouped_test, feature, target_col)
                     trend_changes_test = get_trend_changes(grouped_data=grouped_test, feature=feature,
                                                            target_col=target_col)
-                    stats = [feature, trend_changes, trend_changes_test, trend_corr]
+                    PSI_value = PSI_cal(grouped, grouped_test, target_col)
+                    stats = [feature, trend_changes, trend_changes_test, trend_corr, PSI_value]
                 else:
                     stats = [feature, trend_changes]
                 stats_all.append(stats)
         stats_all_df = pd.DataFrame(stats_all)
         stats_all_df.columns = ['Feature', 'Trend_changes'] if has_test == False else ['Feature', 'Trend_changes',
                                                                                        'Trend_changes_test',
-                                                                                       'Trend_correlation']
+                                                                                       'Trend_correlation', 'PSI_value']
         if len(ignored) > 0:
             print('Categorical features ' + str(ignored) + ' ignored. Categorical features not supported yet.')
 
@@ -354,22 +346,15 @@ class FeatureExplore():
         return stats_all_df
 
     def feature_exp_plots(self, data, target_col, features_list=0, bins=10, data_test=0):
-        """
-        :param data: dataframe containing features and target columns
-        :param target_col: target column name
-        :param features_list: by default creates plots for all features. If list passed, creates plots of only those features.
-        :param bins: number of bins to be created from continuous feature
-        :param data_test: test data which has to be compared with input data for correlation
-        :return: Draws univariate plots for all columns in data
-        """
+
         if type(features_list) == int:
             features_list = list(data.columns)
             features_list.remove(target_col)
 
         for cols in features_list:
             if cols != target_col and data[cols].dtype == 'O':
-                print(cols + ' is categorical. Categorical features not supported yet.')
+                print(cols + ' is categorical. Categorical features not supported.')
             elif cols != target_col and data[cols].dtype != 'O':
-                return variate_plotter(feature=cols, data=data, target_col=target_col, bins=bins,
-                                       data_test=data_test,
-                                       tree_split=self.tree_split)
+                variate_plotter(feature=cols, data=data, target_col=target_col, bins=bins,
+                                data_test=data_test,
+                                tree_split=self.tree_split)

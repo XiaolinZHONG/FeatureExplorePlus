@@ -31,21 +31,22 @@ def identify_single_unique(data):
             print(unique_stats[unique_stats['nunique'] <= 1])
 
 
-class PandasTools():
+class PandasTools(object):
 
-    def __init__(self, data_path, sep=",", nan_values=None, time_column=True, show_detial=True):
+    def __init__(self, data_path, sep=",", nan_values=None, time_column=True, nrows=None, show_detial=True):
         self.data_path = data_path
         self.nan_values = nan_values
         self.time_column = time_column
         self.sep = sep
         self.show_detial = show_detial
+        self.nrows = nrows
 
-    def read_data(self, nrows=None):
+    def read_data(self, ):
         na_values = ['', '#N/A', '#N/A N/A', '#NA', '-1.#IND', '-1.#QNAN', '-NaN', '-nan', '1.#IND', '1.#QNAN', 'N/A',
                      'NA', 'NULL', 'NaN', 'n/a', 'nan', 'null', '\\n', '\\N', "-900", "-1"]
         na_values = na_values.append(self.nan_values)
         reader = pd.read_csv(self.data_path, sep=self.sep, iterator=True, parse_dates=self.time_column,
-                             na_values=na_values, nrows=nrows, infer_datetime_format=True,
+                             na_values=na_values, nrows=self.nrows, infer_datetime_format=True,
                              error_bad_lines=False, engine='c')
         chunks = []
         loop = True
