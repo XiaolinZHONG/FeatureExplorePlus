@@ -283,7 +283,7 @@ def PSI_cal(grouped, grouped_test, target_col):
 
 class FeatureExplore(object):
 
-    def __init__(self, tree_split):
+    def __init__(self, tree_split=False):
         self.tree_split = tree_split
 
     def feature_trend_stats(self, data, target_col, features_list=0, bins=10, data_test=0):
