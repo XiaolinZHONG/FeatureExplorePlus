@@ -117,7 +117,7 @@ def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=N
     ax3 = fig.add_subplot(122)  # This can not be delete
     flag_value = np.array(origin_data[target_col].unique()).astype(int)
     for i in flag_value:
-        sns.kdeplot(origin_data.loc[origin_data[target_col] == i, feature].dropna(), shade=True, label=i)
+        sns.kdeplot(origin_data.loc[origin_data[target_col] == i, feature].fillna(-900), shade=True, label=i)
     plt.title("Distribution of %s" % feature)
     plt.subplots_adjust(wspace=0.25)
     gc.collect()
