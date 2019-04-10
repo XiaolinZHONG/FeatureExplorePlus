@@ -76,8 +76,8 @@ class PandasTools():
             print('--' * 10)
             identify_single_unique(data)
             print('--' * 10)
-            with pd.option_context('display.max_columns', None):
-                print('The Head 3 data:\n')
-                print(data.head(3))
-                print('\n')
+            # with pd.option_context('display.max_columns', None):
+            #     print('The Head 3 data:\n')
+            #     print(data.head(3))
+            #     print('\n')
         return data
