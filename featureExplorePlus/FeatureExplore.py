@@ -367,6 +367,7 @@ class FeatureExplore(object):
         if type(features_list) == int:
             features_list = list(data.columns)
             features_list.remove(target_col)
+        ops = {}
         if self.tree_split:
             for cols in features_list:
                 if cols != target_col and data[cols].dtype == 'O':
@@ -375,6 +376,8 @@ class FeatureExplore(object):
                     tree_bin = tree_split_bins(input_data=data, feature=cols, target_col=target_col, bins=bins,
                                                get_bins_alone=1, min_samples_leaf=min_samples_leaf,
                                                min_samples_split=min_samples_split)
-                    print('This is the bin of feature %s' % cols)
-                    print(tree_bin)
-                    print('---' * 20)
+                    # print('This is the bin of feature %s' % cols)
+                    ops[cols] = tree_bin
+                    # print(tree_bin)
+                    # print('---' * 20)
+        return ops
