@@ -119,6 +119,7 @@ def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=N
     for i in flag_value:
         sns.distplot(origin_data.loc[origin_data[target_col] == i, feature].fillna(-900), hist=True, bins=50, label=i)
     plt.title("Origin distribution of %s" % feature)
+    plt.legend(loc="best")
     plt.subplots_adjust(wspace=0.25)
     gc.collect()
     plt.show()
