@@ -74,8 +74,9 @@ def get_grouped_data(input_data, feature, target_col, bins, cuts=0, is_train=0):
         return grouped
 
 
-def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=None):
+def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=None, box_cox_cut=False):
     """
+    :param box_cox_cut: whether to cut origin data by box cox
     :param origin_data: origin data to plot the distribute
     :param input_data: grouped data contained bins of feature and target mean.
     :param feature: feature column name
@@ -116,8 +117,31 @@ def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=N
 
     ax3 = fig.add_subplot(122)  # This can not be delete
     flag_value = np.array(origin_data[target_col].unique()).astype(int)
-    for i in flag_value:
-        sns.distplot(origin_data.loc[origin_data[target_col] == i, feature].fillna(-900), hist=True, bins=50, label=i)
+    if box_cox_cut:
+        q1 = origin_data[feature].quantile(0.25)
+        q3 = origin_data[feature].quantile(0.75)
+        iqr = q3 - q1
+        up_outline = q3 + 1.5 * iqr
+        low_outline = q1 - 1.5 * iqr
+
+        def outline(x):
+            if x > up_outline:
+                return up_outline + .5 * iqr
+            elif x < low_outline:
+                return low_outline - .5 * iqr
+            else:
+                return x
+
+        origin_data[feature + "_cut"] = origin_data[[feature]].applymap(lambda x: outline(x))
+
+        for i in flag_value:
+            sns.distplot(origin_data.loc[origin_data[target_col] == i, feature + "_cut"].fillna(-1), hist=True, bins=50,
+                         label=i)
+        origin_data.drop([feature + "_cut"], 1)
+    else:
+        for i in flag_value:
+            sns.distplot(origin_data.loc[origin_data[target_col] == i, feature].fillna(-1), hist=True, bins=50, label=i)
+
     plt.title("Origin distribution of %s" % feature)
     plt.legend(loc="best")
     plt.subplots_adjust(wspace=0.25)
@@ -217,7 +241,7 @@ def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0, 
     return new_threshold_2.tolist()
 
 
-def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=False):
+def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=False, box_cox_cut=False):
     print(' {:^100} '.format('Plots for ' + feature))
     if data[feature].dtype == 'O':
         print('Categorical feature not supported')
@@ -235,13 +259,15 @@ def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=
             trend_corr = get_trend_correlation(grouped, grouped_test, feature, target_col)
             print(' {:^100} '.format('Train data plots'))
 
-            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
+            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col,
+                       box_cox_cut=box_cox_cut)
             print(' {:^100} '.format('Test data plots'))
 
             draw_plots(input_data=grouped_test, origin_data=data, feature=feature, target_col=target_col,
-                       trend_correlation=trend_corr)
+                       trend_correlation=trend_corr, box_cox_cut=box_cox_cut)
         else:
-            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
+            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col,
+                       box_cox_cut=box_cox_cut)
         print(
             '---' * 20)
         print('\n')
@@ -260,13 +286,15 @@ def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=
             trend_corr = get_trend_correlation(grouped, grouped_test, feature, target_col)
             print(' {:^100} '.format('Train data plots'))
 
-            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
+            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col,
+                       box_cox_cut=box_cox_cut)
             print(' {:^100} '.format('Test data plots'))
 
             draw_plots(input_data=grouped_test, origin_data=data, feature=feature, target_col=target_col,
-                       trend_correlation=trend_corr)
+                       trend_correlation=trend_corr, box_cox_cut=box_cox_cut)
         else:
-            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
+            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col,
+                       box_cox_cut=box_cox_cut)
         print(
             '---' * 20)
         print('\n')
@@ -294,8 +322,9 @@ def PSI_cal(grouped, grouped_test, target_col):
 
 class FeatureExplore(object):
 
-    def __init__(self, tree_split=False):
+    def __init__(self, tree_split=False, box_cox_cut=False):
         self.tree_split = tree_split
+        self.box_cox_cut = box_cox_cut
 
     def feature_trend_stats(self, data, target_col, features_list=0, bins=10, data_test=0):
 
@@ -368,7 +397,7 @@ class FeatureExplore(object):
             elif cols != target_col and data[cols].dtype != 'O':
                 variate_plotter(feature=cols, data=data, target_col=target_col, bins=bins,
                                 data_test=data_test,
-                                tree_split=self.tree_split)
+                                tree_split=self.tree_split, box_cox_cut=self.box_cox_cut)
 
     def get_tree_bins(self, data, target_col, features_list=0, bins=10, min_samples_leaf=0.05, min_samples_split=0.1):
 
