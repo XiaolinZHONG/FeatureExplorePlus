@@ -5,13 +5,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="featureExplorePlus",
-    version="0.0.5.1",
+    version="0.0.5.2",
     author="Zhong Xiaolin",
     author_email="xlzhong123@163.com",
-    description="Feature exploration for supervised learning. This version based on Abhay's featexp, "
+    description="Feature exploration for supervised learning. "
                 "add user define bins which base on decision tree,"
                 "and add the origin distribution plot function based on seaborn histplot"
                 "add psi calculate function"
+                "add box-cox cut operation"
                 "and add some useful pandas tools",
     long_description="FeatureExplorePlus helps with feature understanding, feature debugging, leakage detection, "
                      "finding noisy features and model monitoring",
@@ -23,6 +24,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['pandas>=0.23.4', 'numpy>=1.15.4', 'matplotlib>=3.0.2', 'scikit-learn>=0.19.0', 'seaborn>=0.8']
+    install_requires=['pandas>=0.23.4', 'numpy>=1.15.4', 'matplotlib>=3.0.2', 'scikit-learn>=0.19.0', 'seaborn>=0.8',
+                      'python>=3.6.5']
 
 )

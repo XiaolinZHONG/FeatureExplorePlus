@@ -7,7 +7,13 @@ import gc
 import math
 
 
-def get_grouped_data(input_data, feature, target_col, bins, cuts=0, is_train=0):
+def get_grouped_data(
+        input_data,
+        feature,
+        target_col,
+        bins,
+        cuts=0,
+        is_train=0):
     """
     :param is_train: trigger to judge whether it's used for train
     :param input_data: data frame contain features and target column
@@ -44,13 +50,19 @@ def get_grouped_data(input_data, feature, target_col, bins, cuts=0, is_train=0):
 
     grouped = input_data.groupby([cut_series], as_index=True).agg(
         {target_col: [np.size, np.mean], feature: [np.mean]})
-    grouped.columns = ['_'.join(cols).strip() for cols in grouped.columns.values]
+    grouped.columns = ['_'.join(cols).strip()
+                       for cols in grouped.columns.values]
     grouped[grouped.index.name] = grouped.index
     grouped.reset_index(inplace=True, drop=True)
     grouped = grouped[[feature] + list(grouped.columns[0:3])]
-    grouped = grouped.rename(index=str, columns={target_col + '_size': 'Samples_in_bin'})
+    grouped = grouped.rename(
+        index=str,
+        columns={
+            target_col +
+            '_size': 'Samples_in_bin'})
     grouped = grouped.reset_index(drop=True)
-    corrected_bin_name = '[' + str(min(input_data[feature])) + ', ' + str(grouped.loc[0, feature]).split(',')[1]
+    corrected_bin_name = '[' + str(min(input_data[feature])) + \
+                         ', ' + str(grouped.loc[0, feature]).split(',')[1]
     grouped[feature] = grouped[feature].astype('category')
     grouped[feature] = grouped[feature].cat.add_categories(corrected_bin_name)
     grouped.loc[0, feature] = corrected_bin_name
@@ -58,10 +70,12 @@ def get_grouped_data(input_data, feature, target_col, bins, cuts=0, is_train=0):
     if has_null == 1:
         grouped_null = grouped.loc[0:0, :].copy()
         grouped_null[feature] = grouped_null[feature].astype('category')
-        grouped_null[feature] = grouped_null[feature].cat.add_categories('Nulls')
+        grouped_null[feature] = grouped_null[feature].cat.add_categories(
+            'Nulls')
         grouped_null.loc[0, feature] = 'Nulls'
         grouped_null.loc[0, 'Samples_in_bin'] = len(data_null)
-        grouped_null.loc[0, target_col + '_mean'] = data_null[target_col].mean()
+        grouped_null.loc[0, target_col +
+                         '_mean'] = data_null[target_col].mean()
         grouped_null.loc[0, feature + '_mean'] = np.nan
         grouped[feature] = grouped[feature].astype('str')
         grouped = pd.concat([grouped_null, grouped], axis=0)
@@ -74,8 +88,15 @@ def get_grouped_data(input_data, feature, target_col, bins, cuts=0, is_train=0):
         return grouped
 
 
-def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=None):
+def draw_plots(
+        input_data,
+        origin_data,
+        feature,
+        target_col,
+        trend_correlation=None,
+        box_cox_cut=False):
     """
+    :param box_cox_cut: whether to cut origin data by box cox
     :param origin_data: origin data to plot the distribute
     :param input_data: grouped data contained bins of feature and target mean.
     :param feature: feature column name
@@ -92,7 +113,7 @@ def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=N
     ax1.set_xticks(np.arange(len(input_data)))
     ax1.set_xticklabels((input_data[feature]).astype('str'))
     plt.xticks(rotation=50)
-    ax1.grid(False)
+    ax1.grid(color='g', linestyle='--',alpha=0.25)
     ax1.set_xlabel('Bins of ' + feature)
     ax1.set_ylabel('Average of ' + target_col)
     ax1.yaxis.tick_left()
@@ -101,14 +122,30 @@ def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=N
     if trend_correlation == 0:
         comment = comment + '\n' + 'Correlation with train trend: NA'
     elif trend_correlation is not None:
-        comment = comment + '\n' + 'Correlation with train trend: ' + str(int(trend_correlation * 100)) + '%'
+        comment = comment + '\n' + 'Correlation with train trend: ' + \
+                  str(int(trend_correlation * 100)) + '%'
 
     props = dict(boxstyle='round', facecolor='snow', alpha=0.5)
-    ax1.text(0.4, 0.5, comment, fontsize=10, verticalalignment='center', bbox=props, transform=ax1.transAxes)
-    plt.title('Average and Samples in bins of ' + target_col + ' on ' + feature)
+    ax1.text(
+        0.4,
+        0.5,
+        comment,
+        fontsize=10,
+        verticalalignment='center',
+        bbox=props,
+        transform=ax1.transAxes)
+    plt.title(
+        'Average and Samples in bins of ' +
+        target_col +
+        ' on ' +
+        feature)
 
     ax2 = ax1.twinx()
-    ax2.bar(np.arange(len(input_data)), input_data['Samples_in_bin'], alpha=0.4)
+    ax2.bar(
+        np.arange(
+            len(input_data)),
+        input_data['Samples_in_bin'],
+        alpha=0.4)
     ax2.set_ylabel('Bin-Wise sample size')
     ax2.yaxis.tick_right()
     ax2.yaxis.set_label_position('right')
@@ -116,8 +153,33 @@ def draw_plots(input_data, origin_data, feature, target_col, trend_correlation=N
 
     ax3 = fig.add_subplot(122)  # This can not be delete
     flag_value = np.array(origin_data[target_col].unique()).astype(int)
-    for i in flag_value:
-        sns.distplot(origin_data.loc[origin_data[target_col] == i, feature].fillna(-900), hist=True, bins=50, label=i)
+    if box_cox_cut:
+        q1 = origin_data[feature].quantile(0.25)
+        q3 = origin_data[feature].quantile(0.75)
+        iqr = q3 - q1
+        up_outline = q3 + 1.5 * iqr
+        low_outline = q1 - 1.5 * iqr
+
+        def outline(x):
+            if x > up_outline:
+                return up_outline + .5 * iqr
+            elif x < low_outline:
+                return low_outline - .5 * iqr
+            else:
+                return x
+
+        origin_data[feature + "_cut"] = origin_data[[feature]
+        ].applymap(lambda x: outline(x))
+
+        for i in flag_value:
+            sns.distplot(origin_data.loc[origin_data[target_col] == i,
+                                         feature + "_cut"].fillna(-1), hist=True, bins=50, label=i)
+        origin_data.drop([feature + "_cut"], 1)
+    else:
+        for i in flag_value:
+            sns.distplot(origin_data.loc[origin_data[target_col] ==
+                                         i, feature].fillna(-1), bins=50, label=i)
+
     plt.title("Origin distribution of %s" % feature)
     plt.legend(loc="best")
     plt.subplots_adjust(wspace=0.25)
@@ -133,10 +195,12 @@ def get_trend_changes(grouped_data, feature, target_col, threshold=0.03):
     :param threshold: minimum % difference required to count as trend change
     :return: number of trend chagnes for the feature
     """
-    grouped_data = grouped_data.loc[grouped_data[feature] != 'Nulls', :].reset_index(drop=True)
+    grouped_data = grouped_data.loc[grouped_data[feature]
+                                    != 'Nulls', :].reset_index(drop=True)
     target_diffs = grouped_data[target_col + '_mean'].diff()
     target_diffs = target_diffs[~np.isnan(target_diffs)].reset_index(drop=True)
-    max_diff = grouped_data[target_col + '_mean'].max() - grouped_data[target_col + '_mean'].min()
+    max_diff = grouped_data[target_col + '_mean'].max() - \
+               grouped_data[target_col + '_mean'].min()
     target_diffs_mod = target_diffs.fillna(0).abs()
     low_change = target_diffs_mod < threshold * max_diff
     target_diffs_norm = target_diffs.divide(target_diffs_mod)
@@ -157,10 +221,12 @@ def get_trend_correlation(grouped, grouped_test, feature, target_col):
     :return: trend correlation between train and test
     """
     grouped = grouped[grouped[feature] != 'Nulls'].reset_index(drop=True)
-    grouped_test = grouped_test[grouped_test[feature] != 'Nulls'].reset_index(drop=True)
+    grouped_test = grouped_test[grouped_test[feature]
+                                != 'Nulls'].reset_index(drop=True)
 
     if grouped_test.loc[0, feature] != grouped.loc[0, feature]:
-        grouped_test[feature] = grouped_test[feature].cat.add_categories(grouped.loc[0, feature])
+        grouped_test[feature] = grouped_test[feature].cat.add_categories(
+            grouped.loc[0, feature])
         grouped_test.loc[0, feature] = grouped.loc[0, feature]
     grouped_test_train = grouped.merge(grouped_test[[feature, target_col + '_mean']], on=feature, how='left',
                                        suffixes=('', '_test'))
@@ -172,13 +238,20 @@ def get_trend_correlation(grouped, grouped_test, feature, target_col):
                                         grouped_test_train[target_col + '_mean_test'])[0, 1]
     else:
         trend_correlation = 0
-        print("Only one bin created for " + feature + ". Correlation can't be calculated")
+        print("Only one bin created for " + feature +
+              ". Correlation can't be calculated")
 
     return trend_correlation
 
 
-def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0, min_samples_leaf=0.05,
-                    min_samples_split=0.1):
+def tree_split_bins(
+        input_data,
+        feature,
+        target_col,
+        bins=10,
+        get_bins_alone=0,
+        min_samples_leaf=0.05,
+        min_samples_split=0.1):
     """
     :param min_samples_leaf: tree split min samples in leaf
     :param min_samples_split: tree split min samples in split
@@ -195,7 +268,8 @@ def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0, 
         min_samples_split=min_samples_split,
         max_depth=bins,
         max_leaf_nodes=bins)
-    x = input_data[feature].fillna(-900).values.reshape(input_data[feature].shape[0], 1)
+    x = input_data[feature].fillna(-1).values.reshape(
+        input_data[feature].shape[0], 1)
     y = input_data[target_col]
     clf.fit(x, y)
     count_leaf = 0
@@ -205,9 +279,11 @@ def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0, 
     threshold = clf.tree_.threshold
     count = 0
     for i in threshold:
-        if i == -2: count += 1
+        if i == -2:
+            count += 1
     new_threshold = list(filter(lambda x: x != -2, threshold))
-    if count > count_leaf: new_threshold += [-2]
+    if count > count_leaf:
+        new_threshold += [-2]
     if get_bins_alone == 1:
         new_threshold_2 = np.sort(new_threshold)
     else:
@@ -217,31 +293,61 @@ def tree_split_bins(input_data, feature, target_col, bins=10, get_bins_alone=0, 
     return new_threshold_2.tolist()
 
 
-def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=False):
+def variate_plotter(
+        feature,
+        data,
+        target_col,
+        bins=10,
+        data_test=0,
+        tree_split=False,
+        box_cox_cut=False):
     print(' {:^100} '.format('Plots for ' + feature))
     if data[feature].dtype == 'O':
         print('Categorical feature not supported')
     elif tree_split:
-        cut = tree_split_bins(input_data=data, feature=feature, target_col=target_col, bins=bins)
+        cut = tree_split_bins(
+            input_data=data,
+            feature=feature,
+            target_col=target_col,
+            bins=bins)
 
-        cuts, grouped = get_grouped_data(input_data=data, feature=feature, target_col=target_col,
-                                         bins=bins,
-                                         cuts=cut, is_train=1)
-        has_test = type(data_test) == pd.core.frame.DataFrame
+        cuts, grouped = get_grouped_data(
+            input_data=data, feature=feature, target_col=target_col, bins=bins, cuts=cut, is_train=1)
+        has_test = isinstance(data_test, pd.core.frame.DataFrame)
         if has_test:
-            grouped_test = get_grouped_data(input_data=data_test.reset_index(drop=True),
-                                            feature=feature,
-                                            target_col=target_col, bins=bins, cuts=cuts)
-            trend_corr = get_trend_correlation(grouped, grouped_test, feature, target_col)
+            grouped_test = get_grouped_data(
+                input_data=data_test.reset_index(
+                    drop=True),
+                feature=feature,
+                target_col=target_col,
+                bins=bins,
+                cuts=cuts)
+            trend_corr = get_trend_correlation(
+                grouped, grouped_test, feature, target_col)
             print(' {:^100} '.format('Train data plots'))
 
-            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
+            draw_plots(
+                input_data=grouped,
+                origin_data=data,
+                feature=feature,
+                target_col=target_col,
+                box_cox_cut=box_cox_cut)
             print(' {:^100} '.format('Test data plots'))
 
-            draw_plots(input_data=grouped_test, origin_data=data, feature=feature, target_col=target_col,
-                       trend_correlation=trend_corr)
+            draw_plots(
+                input_data=grouped_test,
+                origin_data=data,
+                feature=feature,
+                target_col=target_col,
+                trend_correlation=trend_corr,
+                box_cox_cut=box_cox_cut)
         else:
-            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
+            draw_plots(
+                input_data=grouped,
+                origin_data=data,
+                feature=feature,
+                target_col=target_col,
+                box_cox_cut=box_cox_cut)
         print(
             '---' * 20)
         print('\n')
@@ -250,23 +356,43 @@ def variate_plotter(feature, data, target_col, bins=10, data_test=0, tree_split=
         # else:
         #     return grouped
     else:
-        cuts, grouped = get_grouped_data(input_data=data, feature=feature, target_col=target_col,
-                                         bins=bins)
-        has_test = type(data_test) == pd.core.frame.DataFrame
+        cuts, grouped = get_grouped_data(
+            input_data=data, feature=feature, target_col=target_col, bins=bins)
+        has_test = isinstance(data_test, pd.core.frame.DataFrame)
         if has_test:
-            grouped_test = get_grouped_data(input_data=data_test.reset_index(drop=True),
-                                            feature=feature,
-                                            target_col=target_col, bins=bins, cuts=cuts)
-            trend_corr = get_trend_correlation(grouped, grouped_test, feature, target_col)
+            grouped_test = get_grouped_data(
+                input_data=data_test.reset_index(
+                    drop=True),
+                feature=feature,
+                target_col=target_col,
+                bins=bins,
+                cuts=cuts)
+            trend_corr = get_trend_correlation(
+                grouped, grouped_test, feature, target_col)
             print(' {:^100} '.format('Train data plots'))
 
-            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
+            draw_plots(
+                input_data=grouped,
+                origin_data=data,
+                feature=feature,
+                target_col=target_col,
+                box_cox_cut=box_cox_cut)
             print(' {:^100} '.format('Test data plots'))
 
-            draw_plots(input_data=grouped_test, origin_data=data, feature=feature, target_col=target_col,
-                       trend_correlation=trend_corr)
+            draw_plots(
+                input_data=grouped_test,
+                origin_data=data,
+                feature=feature,
+                target_col=target_col,
+                trend_correlation=trend_corr,
+                box_cox_cut=box_cox_cut)
         else:
-            draw_plots(input_data=grouped, origin_data=data, feature=feature, target_col=target_col)
+            draw_plots(
+                input_data=grouped,
+                origin_data=data,
+                feature=feature,
+                target_col=target_col,
+                box_cox_cut=box_cox_cut)
         print(
             '---' * 20)
         print('\n')
@@ -280,8 +406,10 @@ def PSI_cal(grouped, grouped_test, target_col):
     sum = 0
     count = 0
     for i in grouped.index:
-        var1 = grouped_test.loc[i, target_col + '_mean'] - grouped.loc[i, target_col + '_mean']
-        var2 = grouped_test.loc[i, target_col + '_mean'] / grouped.loc[i, target_col + '_mean']
+        var1 = grouped_test.loc[i, target_col +
+                                '_mean'] - grouped.loc[i, target_col + '_mean']
+        var2 = grouped_test.loc[i, target_col +
+                                '_mean'] / grouped.loc[i, target_col + '_mean']
         if math.isnan(var1) or math.isnan(var2):
             count += 1
         else:
@@ -294,71 +422,113 @@ def PSI_cal(grouped, grouped_test, target_col):
 
 class FeatureExplore(object):
 
-    def __init__(self, tree_split=False):
+    def __init__(self, tree_split=False, box_cox_cut=False):
         self.tree_split = tree_split
+        self.box_cox_cut = box_cox_cut
 
-    def feature_trend_stats(self, data, target_col, features_list=0, bins=10, data_test=0):
+    def feature_trend_stats(
+            self,
+            data,
+            target_col,
+            features_list=0,
+            bins=10,
+            data_test=0):
 
-        if type(features_list) == int:
+        if isinstance(features_list, int):
             features_list = list(data.columns)
             features_list.remove(target_col)
 
         stats_all = []
-        has_test = type(data_test) == pd.core.frame.DataFrame
+        has_test = isinstance(data_test, pd.core.frame.DataFrame)
         ignored = []
         for feature in features_list:
             if data[feature].dtype == 'O' or feature == target_col:
                 ignored.append(feature)
             elif self.tree_split:
-                cut = tree_split_bins(input_data=data, feature=feature, target_col=target_col, bins=bins)
-                cuts, grouped = get_grouped_data(input_data=data, feature=feature, target_col=target_col,
-                                                 bins=bins,
-                                                 cuts=cut, is_train=1)
-                trend_changes = get_trend_changes(grouped_data=grouped, feature=feature,
-                                                  target_col=target_col)
+                cut = tree_split_bins(
+                    input_data=data,
+                    feature=feature,
+                    target_col=target_col,
+                    bins=bins)
+                cuts, grouped = get_grouped_data(
+                    input_data=data, feature=feature, target_col=target_col, bins=bins, cuts=cut, is_train=1)
+                trend_changes = get_trend_changes(
+                    grouped_data=grouped, feature=feature, target_col=target_col)
                 if has_test:
-                    grouped_test = get_grouped_data(input_data=data_test.reset_index(drop=True),
-                                                    feature=feature,
-                                                    target_col=target_col, bins=bins, cuts=cuts)
-                    trend_corr = get_trend_correlation(grouped, grouped_test, feature, target_col)
-                    trend_changes_test = get_trend_changes(grouped_data=grouped_test, feature=feature,
-                                                           target_col=target_col)
+                    grouped_test = get_grouped_data(
+                        input_data=data_test.reset_index(
+                            drop=True),
+                        feature=feature,
+                        target_col=target_col,
+                        bins=bins,
+                        cuts=cuts)
+                    trend_corr = get_trend_correlation(
+                        grouped, grouped_test, feature, target_col)
+                    trend_changes_test = get_trend_changes(
+                        grouped_data=grouped_test, feature=feature, target_col=target_col)
                     PSI_value = PSI_cal(grouped, grouped_test, target_col)
-                    stats = [feature, trend_changes, trend_changes_test, trend_corr, PSI_value]
+                    stats = [
+                        feature,
+                        trend_changes,
+                        trend_changes_test,
+                        trend_corr,
+                        PSI_value]
                 else:
                     stats = [feature, trend_changes]
                 stats_all.append(stats)
             else:
 
-                cuts, grouped = get_grouped_data(input_data=data, feature=feature, target_col=target_col,
-                                                 bins=bins)
-                trend_changes = get_trend_changes(grouped_data=grouped, feature=feature,
-                                                  target_col=target_col)
+                cuts, grouped = get_grouped_data(
+                    input_data=data, feature=feature, target_col=target_col, bins=bins)
+                trend_changes = get_trend_changes(
+                    grouped_data=grouped, feature=feature, target_col=target_col)
                 if has_test:
-                    grouped_test = get_grouped_data(input_data=data_test.reset_index(drop=True),
-                                                    feature=feature,
-                                                    target_col=target_col, bins=bins, cuts=cuts)
-                    trend_corr = get_trend_correlation(grouped, grouped_test, feature, target_col)
-                    trend_changes_test = get_trend_changes(grouped_data=grouped_test, feature=feature,
-                                                           target_col=target_col)
+                    grouped_test = get_grouped_data(
+                        input_data=data_test.reset_index(
+                            drop=True),
+                        feature=feature,
+                        target_col=target_col,
+                        bins=bins,
+                        cuts=cuts)
+                    trend_corr = get_trend_correlation(
+                        grouped, grouped_test, feature, target_col)
+                    trend_changes_test = get_trend_changes(
+                        grouped_data=grouped_test, feature=feature, target_col=target_col)
                     PSI_value = PSI_cal(grouped, grouped_test, target_col)
-                    stats = [feature, trend_changes, trend_changes_test, trend_corr, PSI_value]
+                    stats = [
+                        feature,
+                        trend_changes,
+                        trend_changes_test,
+                        trend_corr,
+                        PSI_value]
                 else:
                     stats = [feature, trend_changes]
                 stats_all.append(stats)
         stats_all_df = pd.DataFrame(stats_all)
-        stats_all_df.columns = ['Feature', 'Trend_changes'] if has_test == False else ['Feature', 'Trend_changes',
-                                                                                       'Trend_changes_test',
-                                                                                       'Trend_correlation', 'PSI_value']
+        stats_all_df.columns = [
+            'Feature',
+            'Trend_changes'] if has_test == False else [
+            'Feature',
+            'Trend_changes',
+            'Trend_changes_test',
+            'Trend_correlation',
+            'PSI_value']
         if len(ignored) > 0:
-            print('Categorical features ' + str(ignored) + ' ignored. Categorical features not supported yet.')
+            print('Categorical features ' + str(ignored) +
+                  ' ignored. Categorical features not supported yet.')
 
         print('Returning stats for all numeric features')
         return stats_all_df
 
-    def feature_exp_plots(self, data, target_col, features_list=0, bins=10, data_test=0):
+    def feature_exp_plots(
+            self,
+            data,
+            target_col,
+            features_list=0,
+            bins=10,
+            data_test=0):
 
-        if type(features_list) == int:
+        if isinstance(features_list, int):
             features_list = list(data.columns)
             features_list.remove(target_col)
 
@@ -366,24 +536,42 @@ class FeatureExplore(object):
             if cols != target_col and data[cols].dtype == 'O':
                 print(cols + ' is categorical. Categorical features not supported.')
             elif cols != target_col and data[cols].dtype != 'O':
-                variate_plotter(feature=cols, data=data, target_col=target_col, bins=bins,
-                                data_test=data_test,
-                                tree_split=self.tree_split)
+                variate_plotter(
+                    feature=cols,
+                    data=data,
+                    target_col=target_col,
+                    bins=bins,
+                    data_test=data_test,
+                    tree_split=self.tree_split,
+                    box_cox_cut=self.box_cox_cut)
 
-    def get_tree_bins(self, data, target_col, features_list=0, bins=10, min_samples_leaf=0.05, min_samples_split=0.1):
+    def get_tree_bins(
+            self,
+            data,
+            target_col,
+            features_list=0,
+            bins=10,
+            min_samples_leaf=0.05,
+            min_samples_split=0.1):
 
-        if type(features_list) == int:
+        if isinstance(features_list, int):
             features_list = list(data.columns)
             features_list.remove(target_col)
         ops = {}
         if self.tree_split:
             for cols in features_list:
                 if cols != target_col and data[cols].dtype == 'O':
-                    print(cols + ' is categorical. Categorical features not supported.')
+                    print(
+                        cols + ' is categorical. Categorical features not supported.')
                 elif cols != target_col and data[cols].dtype != 'O':
-                    tree_bin = tree_split_bins(input_data=data, feature=cols, target_col=target_col, bins=bins,
-                                               get_bins_alone=1, min_samples_leaf=min_samples_leaf,
-                                               min_samples_split=min_samples_split)
+                    tree_bin = tree_split_bins(
+                        input_data=data,
+                        feature=cols,
+                        target_col=target_col,
+                        bins=bins,
+                        get_bins_alone=1,
+                        min_samples_leaf=min_samples_leaf,
+                        min_samples_split=min_samples_split)
                     # print('This is the bin of feature %s' % cols)
                     ops[cols] = tree_bin
                     # print(tree_bin)

@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: featureExplorePlus
-Version: 0.0.5.0
-Summary: Feature exploration for supervised learning. This version based on Abhay's featexp, add user define bins which base on decision tree,and add the origin distribution plot function based on seaborn histplotadd psi calculate functionand add some useful pandas tools
+Version: 0.0.5.2
+Summary: Feature exploration for supervised learning. add user define bins which base on decision tree,and add the origin distribution plot function based on seaborn histplotadd psi calculate functionadd box-cox cut operationand add some useful pandas tools
 Home-page: https://github.com/XiaolinZHONG/FeatureExplorePlus.git
 Author: Zhong Xiaolin
 Author-email: xlzhong123@163.com

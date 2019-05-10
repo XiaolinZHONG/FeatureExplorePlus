@@ -8,8 +8,13 @@ data_path2 = "/Users/xiaolin/Desktop/examples_test.csv"
 pdtt2 = fep.PandasTools(data_path2, sep=",")  # 默认是显示详细内容
 df2 = pdtt2.read_data()
 #
-fet = fep.FeatureExplore(tree_split=True)  # 默认不使用决策树分BIN
-fet.feature_exp_plots(data=df,data_test=df,target_col='label',features_list=['col2','col1'])
+fet = fep.FeatureExplore(box_cox_cut=True,tree_split=True)  # 默认不使用决策树分BIN
+fet.feature_exp_plots(
+    data=df,
+    target_col='label',
+    features_list=[
+        'col2',
+        'col3'])
 # df = fet.feature_trend_stats(data=df.fillna(-1), data_test=df2.fillna(-1), target_col='label', features_list=['col2','col1'])
 # print(df.head())
 # # s=fet.get_tree_bins(df, target_col='label', features_list=['col2', 'col1'])
