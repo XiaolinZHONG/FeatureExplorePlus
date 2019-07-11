@@ -278,16 +278,19 @@ def tree_split_bins(
             count_leaf += 1
     threshold = clf.tree_.threshold
     count = 0
+    # new_threshold=[]
     for i in threshold:
         if i == -2:
             count += 1
+        # else:
+        #     new_threshold.append(i)
     new_threshold = list(filter(lambda x: x != -2, threshold))
     if count > count_leaf:
-        new_threshold += [-2]
+        new_threshold .append(-2)
     if get_bins_alone == 1:
         new_threshold_2 = np.sort(new_threshold)
     else:
-        prev_cut = min(x) - 1  # THE BEGINING PART
+        prev_cut = min(x.ravel()) - 1  # THE BEGINING PART
         new_threshold.append(prev_cut)
         new_threshold_2 = np.sort(new_threshold)
     return new_threshold_2.tolist()
