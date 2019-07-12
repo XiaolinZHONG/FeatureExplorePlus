@@ -21,10 +21,10 @@ feature_explore_plus for supervised learning feature explore
 
 #### 1. 安装
 ```
-pip install featureExplorePlus
+pip install -U featureExplorePlus
 ```
 
-需要注意 Python版本为3.* 以上，依赖 sklearn、numpy、pandas、seaborn、 matplotlib。不要安装0.0.1 的该工具包，有一个文档BUG 会导致安装失败。
+需要注意 Python版本为3.* 以上，依赖 sklearn、numpy、pandas、seaborn、 matplotlib。
 
 #### 2. 引入
 ```
