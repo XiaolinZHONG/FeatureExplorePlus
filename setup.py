@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="featureExplorePlus",
-    version="0.0.5.4",
+    version="0.0.5.5",
     author="Zhong Xiaolin",
     author_email="xlzhong123@163.com",
     description="Feature exploration for supervised learning. "
