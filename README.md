@@ -4,7 +4,8 @@ feature_explore_plus for supervised learning feature explore
 
 ### FeatureExplorePlus 简介
 
-基于业内（尤其是金融界业内）经常使用的 BIVAR 变量分析方法衍生而来。既将变量分BIN，分析变量标签在 BIN 之间的走势和基于标签的原始分布等。
+基于 BIVAR 变量分析方法衍生而来。既将变量分BIN，分析变量标签在 BIN 之间的走势和基于标签的原始分布等。
+默认使用等频分BIN，可以选择基于决策树分BIN。
 
 该方法的常用于下面场景：
 
